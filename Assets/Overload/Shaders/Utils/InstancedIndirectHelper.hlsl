@@ -6,13 +6,13 @@ struct InstanceData {
 	float4x4 worldMatrixInverse;
 };
 
-StructuredBuffer<InstanceData> _PerInstanceData;
+StructuredBuffer<InstanceData> _perInstanceData;
 
 // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/ParticlesInstancing.hlsl
 void instancingSetup() {
 	#ifndef SHADERGRAPH_PREVIEW
-		unity_ObjectToWorld = mul(unity_ObjectToWorld, _PerInstanceData[unity_InstanceID].worldMatrix);
-		unity_WorldToObject = mul(unity_WorldToObject, _PerInstanceData[unity_InstanceID].worldMatrixInverse);
+		unity_ObjectToWorld = mul(unity_ObjectToWorld, _perInstanceData[unity_InstanceID].worldMatrix);
+		unity_WorldToObject = mul(unity_WorldToObject, _perInstanceData[unity_InstanceID].worldMatrixInverse);
 	#endif
 }
 

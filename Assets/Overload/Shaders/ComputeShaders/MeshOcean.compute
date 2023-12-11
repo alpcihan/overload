@@ -1,0 +1,39 @@
+#include "Assets/Overload/Shaders/Utils/Math.hlsl"
+
+#pragma kernel CSMain
+
+struct Models {
+    float4x4 model;
+    float4x4 modelInverse;
+};
+
+int _oceanDimension;
+float _unitSize;
+float _maxHeight;
+float _waveFrequency;
+float _seed;
+
+RWStructuredBuffer<uint> _indirectArgs;
+RWStructuredBuffer<Models> _modelMatrices;
+
+[numthreads(1024,1,1)]
+void CSMain (uint id : SV_DispatchThreadID)
+{
+    if(id > _indirectArgs[1]) return;
+    float2 idx = float2(_modelMatrices[id].model[0][0], _modelMatrices[id].model[1][1]);
+
+    float h = noise(float3((idx/_oceanDimension)*_waveFrequency, _seed));
+    h *= _maxHeight;
+    {
+        float start = -_oceanDimension * 0.5;
+        float px = start + idx.x;
+        float py = start + idx.y;
+        _modelMatrices[id].model[0][0] = _unitSize;
+        _modelMatrices[id].model[1][1] = h;
+        _modelMatrices[id].model[2][2] = _unitSize;
+        _modelMatrices[id].model[0][3] = px * _unitSize;
+        _modelMatrices[id].model[1][3] = h*0.5;
+        _modelMatrices[id].model[2][3] = py * _unitSize;
+        _modelMatrices[id].modelInverse = inverse(_modelMatrices[id].model);
+    }
+}
