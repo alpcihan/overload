@@ -164,8 +164,8 @@ namespace overload
                 m_meshOceanCullComputeShader.SetFloat("_maxHeight", m_maxHeight);
                 m_meshOceanCullComputeShader.SetMatrix("_cameraVP", Camera.main.projectionMatrix * Camera.main.worldToCameraMatrix);
 
-                Camera.main.depthTextureMode = DepthTextureMode.Depth;
-                m_meshOceanCullComputeShader.SetTexture(0, "_sceneDepth", Shader.GetGlobalTexture("_CameraDepthTexture"));
+                // Camera.main.depthTextureMode = DepthTextureMode.Depth;
+                // m_meshOceanCullComputeShader.SetTexture(0, "_sceneDepth", Shader.GetGlobalTexture("_CameraDepthTexture"));
 
                 int threadGroups = (int)oceanProps.oceanDimension / 32;
                 m_meshOceanCullComputeShader.Dispatch(0, threadGroups, threadGroups, 1);

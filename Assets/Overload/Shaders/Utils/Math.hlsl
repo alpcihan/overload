@@ -1,6 +1,10 @@
 #ifndef OVERLOAD_UTILS_MATH_INCLUDED
 #define OVERLOAD_UTILS_MATH_INCLUDED
 
+///////////////////////////////////////
+// Matrix operations
+///////////////////////////////////////
+
 float4x4 inverse(float4x4 m) {
     float n11 = m[0][0], n12 = m[1][0], n13 = m[2][0], n14 = m[3][0];
     float n21 = m[0][1], n22 = m[1][1], n23 = m[2][1], n24 = m[3][1];
@@ -39,6 +43,10 @@ float4x4 inverse(float4x4 m) {
 
     return ret;
 }
+
+///////////////////////////////////////
+// Noise
+///////////////////////////////////////
 
 // Precision-adjusted variations of https://www.shadertoy.com/view/4djSRW
 float hash(float p) { p = frac(p * 0.011); p *= p + 7.5; p *= p + p; return frac(p); }
