@@ -1,9 +1,9 @@
-#ifndef SQUARE_WAVE_SHADER_INCLUDED
-#define SQUARE_WAVE_SHADER_INCLUDED
+#ifndef OVERLOAD_UTILS_INSTANCED_INDIRECT_SHADER_INCLUDED
+#define OVERLOAD_UTILS_INSTANCED_INDIRECT_SHADER_INCLUDED
 
 struct InstanceData {
-	float4x4 worldMatrix;
-	float4x4 worldMatrixInverse;
+	float4x4 model;
+	float4x4 modelInverse;
 };
 
 StructuredBuffer<InstanceData> _perInstanceData;
@@ -11,8 +11,8 @@ StructuredBuffer<InstanceData> _perInstanceData;
 // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/ParticlesInstancing.hlsl
 void instancingSetup() {
 	#ifndef SHADERGRAPH_PREVIEW
-		unity_ObjectToWorld = mul(unity_ObjectToWorld, _perInstanceData[unity_InstanceID].worldMatrix);
-		unity_WorldToObject = mul(unity_WorldToObject, _perInstanceData[unity_InstanceID].worldMatrixInverse);
+		unity_ObjectToWorld = mul(unity_ObjectToWorld, _perInstanceData[unity_InstanceID].model);
+		unity_WorldToObject = mul(unity_WorldToObject, _perInstanceData[unity_InstanceID].modelInverse);
 	#endif
 }
 

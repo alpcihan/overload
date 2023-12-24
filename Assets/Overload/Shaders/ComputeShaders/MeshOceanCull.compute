@@ -1,21 +1,31 @@
+//--------------------------------------------------------------------------------------
+// Includes
+//--------------------------------------------------------------------------------------
 #include "UnityCG.cginc"
+#include "Assets/Overload/Shaders/Utils/MeshOcean.hlsl"
 
+//--------------------------------------------------------------------------------------
+// Pragmas
+//--------------------------------------------------------------------------------------
 #pragma kernel CSMain
 
-struct Models {
-    float4x4 model;
-    float4x4 modelInverse;
+//--------------------------------------------------------------------------------------
+// Constant Buffers
+//--------------------------------------------------------------------------------------
+cbuffer CB {
+    MESH_OCEAN_DATA
+    float4x4 _cameraVP;
 };
 
-int _oceanDimension;
-float _unitSize;
-float _maxHeight;
-float4x4 _cameraVP;
-
-// Texture2D<float4> _sceneDepth;
+//--------------------------------------------------------------------------------------
+// Structured Buffers
+//--------------------------------------------------------------------------------------
 RWStructuredBuffer<uint> _indirectArgs;
-RWStructuredBuffer<Models> _modelMatrices;
+RWStructuredBuffer<InstanceData> _modelMatrices;
 
+//--------------------------------------------------------------------------------------
+// Mesh Ocean Cull Compute Shader
+//--------------------------------------------------------------------------------------
 [numthreads(32,32,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
@@ -23,15 +33,15 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     // calculate bounds (TODO: currently assumes objects are cubes and centered at 0,0,0 with no rotation, generalize)
     const float startU = -_oceanDimension * 0.5; // start position (unit)
-    const float startX = (startU + id.x - 0.5) * _unitSize;
-    const float startZ = (startU + id.y - 0.5) * _unitSize;
+    const float startX = (startU + id.x - 0.5) * _oceanUnitSize + _oceanCenter.x;
+    const float startZ = (startU + id.y - 0.5) * _oceanUnitSize + _oceanCenter.z;
 
     const float minX = startX;
-    const float maxX = startX + _unitSize;
-    const float minY = 0;
-    const float maxY = _maxHeight;
+    const float maxX = startX + _oceanUnitSize;
+    const float minY = _oceanCenter.y;
+    const float maxY = minY + _oceanMaxHeight;
     const float minZ = startZ;
-    const float maxZ = startZ + _unitSize; // worst case scenario
+    const float maxZ = startZ + _oceanUnitSize;
 
     const uint BOUND_COUNT = 8;
     const float4 bounds[BOUND_COUNT] = {
@@ -51,17 +61,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     for(uint i = 0; i < BOUND_COUNT; ++i){
         float4 p  = mul(_cameraVP, bounds[i]);
         p.w = max(p.w,0); 
-        p /= p.w; // Dividing by zero yield infinity (or nan)
+        p /= p.w; // TODO: dividing by zero yield infinity (or nan)
         pMin = min(p.xyz,pMin);
         pMax = max(p.xyz,pMax);
     }
 
     bool isCulled = (pMin.z > 1) || (pMin.x > +1) || (pMin.y > +1) || (pMax.z < 0) || (pMax.x < -1) || (pMax.y < -1);
     if(isCulled) return;
-
-    // uint2 texCoord = (ss.xy + 1.0)*0.5*float2(1920,1080);
-    // float depth = Linear01Depth(_sceneDepth[texCoord].r);
-    // if(depth < ss.z) return;
 
     // instance update
     uint instanceIdx;
