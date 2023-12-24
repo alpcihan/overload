@@ -6,13 +6,13 @@ class FullScreenRendererFeature : ScriptableRendererFeature
 {
     [SerializeField] private Material m_material;
 
-    FullScreenPass m_RenderPass = null;
+    FullScreenPass m_fullScreenPass = null;
 
     public override void AddRenderPasses(ScriptableRenderer renderer,
                                     ref RenderingData renderingData)
     {
         if (renderingData.cameraData.cameraType == CameraType.Game)
-            renderer.EnqueuePass(m_RenderPass);
+            renderer.EnqueuePass(m_fullScreenPass);
     }
 
     public override void SetupRenderPasses(ScriptableRenderer renderer,
@@ -21,22 +21,22 @@ class FullScreenRendererFeature : ScriptableRendererFeature
         if (renderingData.cameraData.cameraType == CameraType.Game)
         {
             // ensure depth and normal textures are available
-            m_RenderPass.ConfigureInput(ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Normal);
+            m_fullScreenPass.ConfigureInput(ScriptableRenderPassInput.Color | ScriptableRenderPassInput.Depth);
 
-            m_RenderPass.SetTarget(renderer.cameraColorTargetHandle);
+            m_fullScreenPass.SetTarget(renderer.cameraColorTargetHandle);
         }
     }
 
     public override void Create()
     {
-        m_RenderPass = new FullScreenPass(m_material);
+        m_fullScreenPass = new FullScreenPass(m_material);
     }
 
     class FullScreenPass : ScriptableRenderPass
     {
-        ProfilingSampler m_ProfilingSampler = new ProfilingSampler("FullScreen");
+        ProfilingSampler m_profilingSampler = new ProfilingSampler("FullScreen");
         Material m_material;
-        RTHandle m_CameraColorTarget;
+        RTHandle m_cameraColorTarget;
 
         public FullScreenPass(Material material)
         {
@@ -46,12 +46,12 @@ class FullScreenRendererFeature : ScriptableRendererFeature
 
         public void SetTarget(RTHandle colorHandle)
         {
-            m_CameraColorTarget = colorHandle;
+            m_cameraColorTarget = colorHandle;
         }
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            ConfigureTarget(m_CameraColorTarget);
+            ConfigureTarget(m_cameraColorTarget);
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -64,12 +64,12 @@ class FullScreenRendererFeature : ScriptableRendererFeature
                 return;
 
             CommandBuffer cmd = CommandBufferPool.Get();
-            using (new ProfilingScope(cmd, m_ProfilingSampler))
+            using (new ProfilingScope(cmd, m_profilingSampler))
             {
-                // param update
-                Blitter.BlitCameraTexture(cmd, m_CameraColorTarget, m_CameraColorTarget, m_material, 0);
+                Blitter.BlitCameraTexture(cmd, m_cameraColorTarget, m_cameraColorTarget, m_material, 0);
             }
             context.ExecuteCommandBuffer(cmd);
+
             cmd.Clear();
 
             CommandBufferPool.Release(cmd);

@@ -1,5 +1,12 @@
 Shader "OutlineBlit"
 {
+    Properties
+    {
+        _depthThreshold ("Depth Threshold", Range(0, 10)) = 1
+        _surfaceColor ("Surface Color", Color) = (0,0,0,1)
+        _outlineColor ("Outline Color", Color) = (1,1,1,1)
+    }
+
     SubShader
     {
         Tags { "RenderType"="Opaque" "RenderPipeline" = "UniversalPipeline"}
@@ -9,67 +16,67 @@ Shader "OutlineBlit"
         {
             Name "OutlineBlitPass"
 
-            CGPROGRAM
-            #include "UnityCG.cginc"
-            ENDCG
-
             HLSLPROGRAM
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            // The Blit.hlsl file provides the vertex shader (Vert),
-            // input structure (Attributes) and output strucutre (Varyings)
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Assets/Overload/Shaders/Utils/Outline.hlsl"
 
             #pragma vertex Vert
             #pragma fragment frag
 
+            TEXTURE2D_X(_CameraColorTexture);
             TEXTURE2D_X(_CameraDepthTexture);
-            TEXTURE2D_X(_CameraDepthNormalsTexture);
 
             SAMPLER(sampler_CameraDepthTexture);
-            SAMPLER(sampler_CameraDepthNormalsTexture);
+            SAMPLER(sampler_CameraColorTexture);
 
             float4 _CameraDepthTexture_TexelSize;
 
-            float3 DecodeViewNormalStereo(float4 enc4)
+            float _depthThreshold;
+            float4 _surfaceColor;
+            float4 _outlineColor;
+
+            float getLinearEyeDepth(float2 texCoord) 
             {
-                float kScale = 1.7777;
-                float3 nn = enc4.xyz * float3(2 * kScale, 2 * kScale, 0) + float3(-kScale, -kScale, 1);
-                float g = 2.0 / dot(nn.xyz, nn.xyz);
-                float3 n;
-                n.xy = g * nn.xy;
-                n.z = g - 1;
-                return n;
+                float z = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, texCoord).r;
+                z = 1.0 / (_ZBufferParams.z * z + _ZBufferParams.w);
+                
+                return z;
+            }
+
+            bool checkOutlineByDepth(float2 texCoord, float depthThreshold)
+            {
+                float depth = getLinearEyeDepth(texCoord);
+                float depthTR = getLinearEyeDepth(texCoord + float2(_CameraDepthTexture_TexelSize.x, _CameraDepthTexture_TexelSize.y));
+                float depthTL = getLinearEyeDepth(texCoord + float2(-_CameraDepthTexture_TexelSize.x, _CameraDepthTexture_TexelSize.y));
+                float depthBR = getLinearEyeDepth(texCoord + float2(_CameraDepthTexture_TexelSize.x, -_CameraDepthTexture_TexelSize.y));
+                float depthBL = getLinearEyeDepth(texCoord + float2(-_CameraDepthTexture_TexelSize.x, -_CameraDepthTexture_TexelSize.y));
+
+                float TR_BL_2 = depthTR - depthBL;
+                TR_BL_2 *= TR_BL_2;
+                float TL_BR_2 = depthTL - depthBR;
+                TL_BR_2 *= TL_BR_2;
+
+                float krnl = sqrt(TR_BL_2 + TL_BR_2);
+                return krnl > depthThreshold;
+            }
+
+            float4 calculateFragColor(float3 color, float2 texCoord) {
+                // check outline calculate flag
+                bool isCalcualteOutline = isOutlineCalculateStencil(color);
+                if(!isCalcualteOutline) return float4(color,1);
+
+                bool isOutlineDepth = checkOutlineByDepth(texCoord, _depthThreshold);
+                return isOutlineDepth ? _outlineColor : _surfaceColor;
             }
 
             half4 frag (Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                float depth = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, input.texcoord).x;
-                //depth = Linear01Depth(depth); // TODO: make clipping plane independent
-
-                // Define outline parameters
-                float depthThreshold = 0.005; // Adjust as needed
-
-                // Sample neighboring pixels to detect depth differences
-                float depthLeft = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, input.texcoord + float2(-_CameraDepthTexture_TexelSize.x, 0)).r;
-                float depthRight = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, input.texcoord + float2(_CameraDepthTexture_TexelSize.x, 0)).r;
-                float depthUp = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, input.texcoord + float2(0, _CameraDepthTexture_TexelSize.y)).r;
-                float depthDown = SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, input.texcoord + float2(0, -_CameraDepthTexture_TexelSize.y)).r;
-
-                // Calculate depth differences
-                float depthDiffX = abs(depth - depthLeft) + abs(depth - depthRight);
-                float depthDiffY = abs(depth - depthUp) + abs(depth - depthDown);
-
-                // Check if the depth differences exceed the threshold
-                bool outline = (depthDiffX > depthThreshold || depthDiffY > depthThreshold);
-
-                float4 normalDepth = SAMPLE_TEXTURE2D_X(_CameraDepthNormalsTexture, sampler_CameraDepthNormalsTexture, input.texcoord);
-                float3 normal = DecodeViewNormalStereo(normalDepth);
-                
-                return half4(normal * 0.5 + 0.5, 1);
-
-                return outline ? float4(1, 1, 1, 1) : float4(0, 0, 0, 1);
+                float3 color = SAMPLE_TEXTURE2D_X(_CameraColorTexture, sampler_CameraColorTexture, input.texcoord);
+            
+                return calculateFragColor(color, input.texcoord);
             }
             ENDHLSL
         }
