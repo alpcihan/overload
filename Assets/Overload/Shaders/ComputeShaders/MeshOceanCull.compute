@@ -31,10 +31,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 {
     if(id.x > _oceanDimension || id.y > _oceanDimension) return;
 
-    // calculate bounds (TODO: currently assumes objects are cubes and centered at 0,0,0 with no rotation, generalize)
     const float startU = -_oceanDimension * 0.5; // start position (unit)
-    const float startX = (startU + id.x - 0.5) * _oceanUnitSize + _oceanCenter.x;
-    const float startZ = (startU + id.y - 0.5) * _oceanUnitSize + _oceanCenter.z;
+    const float startX = (startU + id.x - 0.5) * _oceanUnitSize + _oceanCenter.x + _oceanFluxOffset.x;
+    const float startZ = (startU + id.y - 0.5) * _oceanUnitSize + _oceanCenter.z + _oceanFluxOffset.y;
 
     const float minX = startX;
     const float maxX = startX + _oceanUnitSize;
@@ -66,8 +65,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         pMax = max(p.xyz,pMax);
     }
 
-    bool isCulled = (pMin.z > 1) || (pMin.x > +1) || (pMin.y > +1) || (pMax.z < 0) || (pMax.x < -1) || (pMax.y < -1);
-    if(isCulled) return;
+    const bool isCulled = (pMin.z > 1) || (pMin.x > +1) || (pMin.y > +1) || (pMax.z < 0) || (pMax.x < -1) || (pMax.y < -1);
+    //if(isCulled) return;
 
     // instance update
     uint instanceIdx;

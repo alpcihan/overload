@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace overload
@@ -11,6 +9,7 @@ namespace overload
         public static readonly int _oceanUnitSize = Shader.PropertyToID("_oceanUnitSize");
         public static readonly int _oceanMaxHeight = Shader.PropertyToID("_oceanMaxHeight");
         public static readonly int _oceanWaveFrequency = Shader.PropertyToID("_oceanWaveFrequency");
+        public static readonly int _oceanFluxOffset = Shader.PropertyToID("_oceanFluxOffset");
 
         public static readonly int _cameraVP = Shader.PropertyToID("_cameraVP");
         public static readonly int _seed = Shader.PropertyToID("_seed");

@@ -17,7 +17,8 @@ struct InstanceData {
                         int _oceanDimension;      \
                         float _oceanUnitSize;     \
                         float _oceanMaxHeight;    \
-                        float _oceanWaveFrequency;
+                        float _oceanWaveFrequency;\
+                        float4 _oceanFluxOffset;
 #endif
 
 #endif
