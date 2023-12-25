@@ -27,7 +27,7 @@ RWStructuredBuffer<InstanceData> _modelMatrices;
 // Mesh Ocean Cull Compute Shader
 //--------------------------------------------------------------------------------------
 [numthreads(32,32,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+void CSMain (uint2 id : SV_DispatchThreadID)
 {
     if(id.x > _oceanDimension || id.y > _oceanDimension) return;
 

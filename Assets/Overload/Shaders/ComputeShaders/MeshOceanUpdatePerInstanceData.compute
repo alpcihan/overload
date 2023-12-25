@@ -14,7 +14,7 @@
 //--------------------------------------------------------------------------------------
 cbuffer CB {
     MESH_OCEAN_DATA
-    float _seed;
+    // float _seed;
 };
 
 //--------------------------------------------------------------------------------------
@@ -24,39 +24,25 @@ RWStructuredBuffer<uint> _indirectArgs;
 RWStructuredBuffer<InstanceData> _modelMatrices;
 
 //--------------------------------------------------------------------------------------
-// Mesh Ocean Compute Shader
+// Mesh Ocean Update Per Instance Data Compute Shader
 //--------------------------------------------------------------------------------------
-float calculateOceanMeshHeightLocal(uint2 idx) {
-    const float2 unitOffsetLocal = (_oceanWaveFrequency * _oceanUnitSize * idx) / _oceanDimension;
-    float h = noise(float3(
-                        unitOffsetLocal,
-                        _seed
-                    ));
-    h *= _oceanMaxHeight;
-
-    return h;
-}
-
-[numthreads(1024,1,1)]
-void CSMain (uint id : SV_DispatchThreadID) {
-    if(id > _indirectArgs[1]) return;
+[numthreads(32,32,1)]
+void CSMain (uint2 id : SV_DispatchThreadID) {
+    if(id.x > _oceanDimension || id.y > _oceanDimension) return;
 
     // calculate ocean mesh index
-    uint2 idx = uint2(_modelMatrices[id].model[0][0], _modelMatrices[id].model[1][1]);
-    idx = calculateOceanMeshIndex(idx, _oceanDimension, _oceanUnitSize, _oceanFluxOffset); 
+    uint2 idx = calculateOceanMeshIndex(id, _oceanDimension, _oceanUnitSize, _oceanFluxOffset); 
 
     // calculate transform
     const float2 worldPos2D = calculateOceanMeshPos2DWorld(idx, _oceanDimension, _oceanUnitSize, _oceanFluxOffset, _oceanCenter);
 
-    const float heightLocal = calculateOceanMeshHeightLocal(idx);
-    const float heightWorld = calculateOceanMeshHeightWorld(heightLocal, _oceanCenter);
-
-    // update instance data
+    // update per instance data
     _modelMatrices[id].model[0][0] = _oceanUnitSize;                        // scale x
-    _modelMatrices[id].model[1][1] = heightWorld;                           // scale y
+    _modelMatrices[id].model[1][1] = 1;                                     // scale y
     _modelMatrices[id].model[2][2] = _oceanUnitSize;                        // scale z
     _modelMatrices[id].model[0][3] = worldPos2D.x;                          // position x
-    _modelMatrices[id].model[1][3] = heightWorld;                           // position y
+    _modelMatrices[id].model[1][3] = _oceanCenter.y;                        // position y
     _modelMatrices[id].model[2][3] = worldPos2D.y;                          // position z
-    _modelMatrices[id].modelInverse = inverse(_modelMatrices[id].model);    // transform inverse
+
+    _modelMatrices[id].modelInverse = inverse(_modelMatrices[id].model);    // inverse
 }

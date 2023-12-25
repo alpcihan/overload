@@ -41,13 +41,13 @@ float2 calculateOceanMeshPos2DWorld(uint2 idx, int oceanDimension, float oceanUn
     xz += oceanFluxOffset.xy;
 
     // mod by ocean size                [0, OceanSize - 1]
-    xz %= float2(oceanSize, oceanSize);
+    xz %= oceanSize;
 
     // calculate center of the mesh     [0 + halfUnitSize, OceanSize - 1 + halfUnitSize] 
-    xz += float2(halfUnitSize, halfUnitSize);
+    xz += halfUnitSize;
 
     // center the ocean at local space
-    xz -= float2(halfOceanSize, halfOceanSize);
+    xz -= halfOceanSize;
 
     // calculate the world space position
     xz += oceanCenter.xy;
@@ -57,6 +57,13 @@ float2 calculateOceanMeshPos2DWorld(uint2 idx, int oceanDimension, float oceanUn
 
 inline float calculateOceanMeshHeightWorld(float heightLocal, float3 oceanCenter) {
     return heightLocal * 0.5 + oceanCenter.y;;
+}
+
+uint2 calculateOceanMeshIndex(uint2 id, float oceanDimension, float oceanUnitSize, float2 oceanFluxOffset) {
+    id += (uint)(oceanFluxOffset / oceanUnitSize);
+    id %= oceanDimension;
+
+    return id;
 }
 
 #endif
