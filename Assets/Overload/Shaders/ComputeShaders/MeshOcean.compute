@@ -13,22 +13,23 @@
 // Constant Buffers
 //--------------------------------------------------------------------------------------
 cbuffer CB {
-    MESH_OCEAN_DATA
+    OCEAN_DATA
     float _seed;
 };
 
 //--------------------------------------------------------------------------------------
 // Structured Buffers
 //--------------------------------------------------------------------------------------
-RWStructuredBuffer<uint> _indirectArgs;
-RWStructuredBuffer<InstanceData> _modelMatrices;
+StructuredBuffer<uint> _indirectArgs;
+OCEAN_MODEL_MATRICES_BUFFER
 
 //--------------------------------------------------------------------------------------
 // Mesh Ocean Compute Shader
 //--------------------------------------------------------------------------------------
-inline float calculateHeightOffset(uint2 idx) {
+float oceanCalculateHeightLocal(uint2 unitPos) {
+    const float2 unitOffsetLocal = (_oceanWaveFrequency * _oceanUnitSize * unitPos) / _oceanDimension;
     float h = noise(float3(
-                        (_oceanWaveFrequency*idx)/_oceanDimension,
+                        unitOffsetLocal,
                         _seed
                     ));
     h *= _oceanMaxHeight;
@@ -36,33 +37,23 @@ inline float calculateHeightOffset(uint2 idx) {
     return h;
 }
 
-inline float3 calculateWorldPos(uint2 idx, float scaleY) {
-    float startIdx = -_oceanDimension * 0.5;
-
-    float x = (startIdx + idx.x) * _oceanUnitSize + _oceanCenter.x;
-    float z = (startIdx + idx.y) * _oceanUnitSize + _oceanCenter.z;
-    float y = scaleY * 0.5 + _oceanCenter.y;
-
-    return float3(x, y, z);
-}
-
 [numthreads(1024,1,1)]
 void CSMain (uint id : SV_DispatchThreadID) {
     if(id > _indirectArgs[1]) return;
 
-    // get ocean unit index
-    uint2 idx = uint2(_modelMatrices[id].model[0][0], _modelMatrices[id].model[1][1]);
-    
+    // calculate ocean mesh index
+    uint2 unitPos;
+    OCEAN_DECODE_INSTANCE_UNIT_POSITION(id, unitPos);
+
     // calculate transform
-    const float scaleY = calculateHeightOffset(idx);
-    const float3 worldPos = calculateWorldPos(idx, scaleY);
+    const float heightLocal = oceanCalculateHeightLocal(unitPos);
+    const float heightWorld = heightLocal * 0.5 + _oceanCenter.y;
 
     // update instance data
-    _modelMatrices[id].model[0][0] = _oceanUnitSize;
-    _modelMatrices[id].model[1][1] = scaleY;
-    _modelMatrices[id].model[2][2] = _oceanUnitSize;
-    _modelMatrices[id].model[0][3] = worldPos.x;
-    _modelMatrices[id].model[1][3] = worldPos.y;
-    _modelMatrices[id].model[2][3] = worldPos.z;
-    _modelMatrices[id].modelInverse = inverse(_modelMatrices[id].model);
+    _oceanModelMatrices[id].model[0][0] = _oceanUnitSize;                           // scale x
+    _oceanModelMatrices[id].model[1][1] = heightLocal;                              // scale y
+    _oceanModelMatrices[id].model[2][2] = _oceanUnitSize;                           // scale z
+    _oceanModelMatrices[id].model[1][3] = heightWorld;                              // position y
+
+    _oceanModelMatrices[id].modelInverse = inverse(_oceanModelMatrices[id].model);  // transform inverse
 }

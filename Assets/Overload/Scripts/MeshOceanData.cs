@@ -6,7 +6,8 @@ namespace overload
     [Serializable]
     public struct MeshOceanData
     {
-        public uint oceanDimension;
+        [Header("Properties")]
+        public uint dimension;
 
         [Range(0.1f, 1.0f)]
         public float unitSize;
@@ -23,15 +24,23 @@ namespace overload
         [Range(0, 10)]
         public float speed;
 
+        public Vector2 flux;
+
+        [Header("References")]
         public Mesh mesh;
 
         public Material material;
     };
 
-    public struct MeshOceanShaderData {
-        public Vector4 oceanCenter; // TODO: use vec3 with alignment handle
-        public int oceanDimension;
-        public float unitSize;
-        public float maxHeight;
-    };
+    public struct InstanceData
+    {
+        public Matrix4x4 Matrix;
+        public Matrix4x4 MatrixInverse;
+
+        public static int Size()
+        {
+            return sizeof(float) * 4 * 4
+                 + sizeof(float) * 4 * 4;
+        }
+    }
 }

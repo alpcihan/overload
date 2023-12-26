@@ -13,7 +13,7 @@
 // Constant Buffers
 //--------------------------------------------------------------------------------------
 cbuffer CB {
-    MESH_OCEAN_DATA
+    OCEAN_DATA
     float4x4 _cameraVP;
 };
 
@@ -21,27 +21,24 @@ cbuffer CB {
 // Structured Buffers
 //--------------------------------------------------------------------------------------
 RWStructuredBuffer<uint> _indirectArgs;
-RWStructuredBuffer<InstanceData> _modelMatrices;
+OCEAN_MODEL_MATRICES_BUFFER
 
 //--------------------------------------------------------------------------------------
-// Mesh Ocean Cull Compute Shader
+// Ocean Cull Compute Shader
 //--------------------------------------------------------------------------------------
-[numthreads(32,32,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
-{
-    if(id.x > _oceanDimension || id.y > _oceanDimension) return;
+bool frustumCull(float2 worldPos2D) {
+    // calculate bounds
+    const float halfUnitSize = _oceanUnitSize*0.5;
+    const float startX = worldPos2D.x;
+    const float startZ = worldPos2D.y;
 
-    // calculate bounds (TODO: currently assumes objects are cubes and centered at 0,0,0 with no rotation, generalize)
-    const float startU = -_oceanDimension * 0.5; // start position (unit)
-    const float startX = (startU + id.x - 0.5) * _oceanUnitSize + _oceanCenter.x;
-    const float startZ = (startU + id.y - 0.5) * _oceanUnitSize + _oceanCenter.z;
-
-    const float minX = startX;
-    const float maxX = startX + _oceanUnitSize;
+    const float minX = startX - halfUnitSize;
+    const float maxX = startX + halfUnitSize;
+    const float minZ = startZ - halfUnitSize;
+    const float maxZ = startZ + halfUnitSize;
+    // ocean height is calculated in another pass; therefore, max bounds are used.
     const float minY = _oceanCenter.y;
     const float maxY = minY + _oceanMaxHeight;
-    const float minZ = startZ;
-    const float maxZ = startZ + _oceanUnitSize;
 
     const uint BOUND_COUNT = 8;
     const float4 bounds[BOUND_COUNT] = {
@@ -66,12 +63,33 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         pMax = max(p.xyz,pMax);
     }
 
-    bool isCulled = (pMin.z > 1) || (pMin.x > +1) || (pMin.y > +1) || (pMax.z < 0) || (pMax.x < -1) || (pMax.y < -1);
-    if(isCulled) return;
+    const bool isCulled = (pMin.z > 1) || (pMin.x > +1) || (pMin.y > +1) || (pMax.z < 0) || (pMax.x < -1) || (pMax.y < -1);
+    return isCulled;
+}
+
+[numthreads(32,32,1)]
+void CSMain (uint2 id : SV_DispatchThreadID) {
+    if(id.x > _oceanDimension || id.y > _oceanDimension) return;
+
+    uint instanceID = convertIndex2Dto1D(id, _oceanDimension);
+
+    // calculate world pos 2D
+    uint2 unitPos = oceanCalculateUnitPosition(id, _oceanDimension, _oceanUnitSize, _oceanFluxOffset);
+    const float2 worldPos2D = oceanCalculatePos2DWorld(unitPos, _oceanDimension, _oceanUnitSize, _oceanFluxOffset, _oceanCenter);
+
+    if(frustumCull(worldPos2D)) return;
 
     // instance update
-    uint instanceIdx;
-    InterlockedAdd(_indirectArgs[1], 1, instanceIdx);
-    _modelMatrices[instanceIdx].model[0][0] = float(id.x);
-    _modelMatrices[instanceIdx].model[1][1] = float(id.y);
+    uint instanceIndex;
+    InterlockedAdd(_indirectArgs[1], 1, instanceIndex);
+
+    // update per instance data
+    //
+    // Note: It is not the responsibility of the culling pass to set per-instance data.
+    //       However, since worldPos2D is calculated during the cull pass (to avoid an extra pass),
+    //       it can be directly passed to the model matrices.
+    _oceanModelMatrices[instanceIndex].model[0][3] = worldPos2D.x;      // position x
+    _oceanModelMatrices[instanceIndex].model[2][3] = worldPos2D.y;      // position z
+
+    OCEAN_ENCODE_INSTANCE_UNIT_POSITION(instanceIndex, unitPos)    
 }

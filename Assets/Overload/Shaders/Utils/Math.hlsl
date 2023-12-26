@@ -49,9 +49,9 @@ float4x4 inverse(float4x4 m) {
 ///////////////////////////////////////
 
 // Precision-adjusted variations of https://www.shadertoy.com/view/4djSRW
-float hash(float p) { p = frac(p * 0.011); p *= p + 7.5; p *= p + p; return frac(p); }
-float hash(float2 p) {float3 p3 = frac(float3(p.xyx) * 0.13); p3 += dot(p3, p3.yzx + 3.333); return frac((p3.x + p3.y) * p3.z); }
-float noise(float3 x) {
+inline float hash(float p) { p = frac(p * 0.011); p *= p + 7.5; p *= p + p; return frac(p); }
+inline float hash(float2 p) {float3 p3 = frac(float3(p.xyx) * 0.13); p3 += dot(p3, p3.yzx + 3.333); return frac((p3.x + p3.y) * p3.z); }
+inline float noise(float3 x) {
     const float3 step = float3(110, 241, 171);
 
     float3 i = floor(x);
@@ -66,6 +66,16 @@ float noise(float3 x) {
                    lerp( hash(n + dot(step, float3(0, 1, 0))), hash(n + dot(step, float3(1, 1, 0))), u.x), u.y),
                lerp(lerp( hash(n + dot(step, float3(0, 0, 1))), hash(n + dot(step, float3(1, 0, 1))), u.x),
                    lerp( hash(n + dot(step, float3(0, 1, 1))), hash(n + dot(step, float3(1, 1, 1))), u.x), u.y), u.z);
+}
+
+inline uint convertIndex2Dto1D(uint2 idx2D, uint width) {
+    return idx2D.y * width + idx2D.x;
+}
+
+inline uint2 convertIndex1Dto2D(uint index1D, uint width) {
+    uint y = index1D / width;
+    uint x = index1D % width;
+    return uint2(x, y);
 }
 
 #endif
