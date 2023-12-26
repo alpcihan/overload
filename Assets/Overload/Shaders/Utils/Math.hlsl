@@ -68,4 +68,14 @@ inline float noise(float3 x) {
                    lerp( hash(n + dot(step, float3(0, 1, 1))), hash(n + dot(step, float3(1, 1, 1))), u.x), u.y), u.z);
 }
 
+inline uint convertIndex2Dto1D(uint2 idx2D, uint width) {
+    return idx2D.y * width + idx2D.x;
+}
+
+inline uint2 convertIndex1Dto2D(uint index1D, uint width) {
+    uint y = index1D / width;
+    uint x = index1D % width;
+    return uint2(x, y);
+}
+
 #endif
