@@ -24,7 +24,7 @@ struct OceanInstanceData {
                     float _oceanWaveFrequency;\
                     float2 _oceanFluxOffset;  \
 
-#define OCEAN_MODEL_MATRICES_BUFFER RWStructuredBuffer<OceanInstanceData> _oceanModelMatrices ;
+#define OCEAN_MODEL_MATRICES_BUFFER RWStructuredBuffer<OceanInstanceData> _oceanModelMatrices;
 
 //--------------------------------------------------------------------------------------
 // Ocean Utils

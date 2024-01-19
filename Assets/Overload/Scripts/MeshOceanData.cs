@@ -9,7 +9,7 @@ namespace overload
         [Header("Properties")]
         public uint dimension;
 
-        [Range(0.1f, 1.0f)]
+        [Range(0.1f, 10.0f)]
         public float unitSize;
 
         [Range(0.1f, 20)]

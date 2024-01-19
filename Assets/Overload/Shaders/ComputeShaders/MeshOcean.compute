@@ -21,18 +21,31 @@ cbuffer CB {
 // Structured Buffers
 //--------------------------------------------------------------------------------------
 StructuredBuffer<uint> _indirectArgs;
+StructuredBuffer<float> _audioSpectrum;
 OCEAN_MODEL_MATRICES_BUFFER
 
 //--------------------------------------------------------------------------------------
 // Mesh Ocean Compute Shader
 //--------------------------------------------------------------------------------------
 float oceanCalculateHeightLocal(uint2 unitPos) {
+    // noise
     const float2 unitOffsetLocal = (_oceanWaveFrequency * _oceanUnitSize * unitPos) / _oceanDimension;
     float h = noise(float3(
                         unitOffsetLocal,
                         _seed
                     ));
     h *= _oceanMaxHeight;
+
+    // audio
+    const uint unitPos1D = convertIndex2Dto1D(unitPos.yx, _oceanDimension);
+    const uint audioSampleIdx = unitPos1D % 1024;
+    
+    float spectrumSample = _audioSpectrum[audioSampleIdx];
+
+    h += noise(float3(
+        unitOffsetLocal,
+        spectrumSample * 10
+    )) * spectrumSample * (audioSampleIdx + 1) * 2.5;
 
     return h;
 }

@@ -14,16 +14,11 @@ namespace overload
         public ShadowCastingMode shadowCasting = ShadowCastingMode.Off;
         public bool receiveShadows = true;
 
-        [Header("Internal References")]
-        public ComputeShader m_resetInstancedIndirectDataComputeShader;
-        public ComputeShader m_meshOceanCullComputeShader;
-        public ComputeShader m_meshOceanComputeShader;
-
         #endregion
 
         #region monobehaviour
 
-        private void OnEnable()
+        private void Start()
         {
             // init variables
             m_seed = 0;
@@ -46,7 +41,7 @@ namespace overload
             _drawIID();
         }
 
-        private void OnDisable()
+        private void OnDestroy()
         {
             if (m_modelMatricesBuffer != null)
             {
@@ -64,6 +59,14 @@ namespace overload
         #endregion
 
         #region private
+
+        [Header("Audio")]
+        [SerializeField] private AudioSpectrumGPU m_audioSpectrumGPU;
+
+        [Header("Internal References")]
+        [SerializeField] private ComputeShader m_resetInstancedIndirectDataComputeShader;
+        [SerializeField] private ComputeShader m_meshOceanCullComputeShader;
+        [SerializeField] private ComputeShader m_meshOceanComputeShader;
 
         private float m_seed;
         private float m_oceanWaveMaxHeight;
@@ -130,6 +133,7 @@ namespace overload
                 // set mesh ocean compute pass buffers
                 m_meshOceanComputeShader.SetBuffer(0, ShaderID._indirectArgs, m_indirectArgsBuffer);
                 m_meshOceanComputeShader.SetBuffer(0, ShaderID._oceanModelMatrices, m_modelMatricesBuffer);
+                m_meshOceanComputeShader.SetBuffer(0, ShaderID._audioSpectrum, m_audioSpectrumGPU.audioSpectrumBuffer);
             }
         }
 
