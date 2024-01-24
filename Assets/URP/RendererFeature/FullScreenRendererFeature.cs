@@ -21,8 +21,8 @@ class FullScreenRendererFeature : ScriptableRendererFeature
         if (renderingData.cameraData.cameraType == CameraType.Game)
         {
             // ensure depth and normal textures are available
-            m_fullScreenPass.ConfigureInput(ScriptableRenderPassInput.Color | ScriptableRenderPassInput.Depth);
-
+            m_fullScreenPass.ConfigureInput(ScriptableRenderPassInput.Color | ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Normal);
+ 
             m_fullScreenPass.SetTarget(renderer.cameraColorTargetHandle);
         }
     }
