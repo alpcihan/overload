@@ -16,5 +16,6 @@ namespace overload
         public static readonly int _seed = Shader.PropertyToID("_seed");
         public static readonly int _perInstanceData = Shader.PropertyToID("_perInstanceData");
         public static readonly int _indirectArgs = Shader.PropertyToID("_indirectArgs");
+        public static readonly int _audioSpectrum = Shader.PropertyToID("_audioSpectrum");
     }
 }

@@ -9,7 +9,7 @@ namespace overload
         [Header("Properties")]
         public uint dimension;
 
-        [Range(0.1f, 1.0f)]
+        [Range(0.1f, 10.0f)]
         public float unitSize;
 
         [Range(0.1f, 20)]
@@ -32,15 +32,4 @@ namespace overload
         public Material material;
     };
 
-    public struct InstanceData
-    {
-        public Matrix4x4 Matrix;
-        public Matrix4x4 MatrixInverse;
-
-        public static int Size()
-        {
-            return sizeof(float) * 4 * 4
-                 + sizeof(float) * 4 * 4;
-        }
-    }
 }

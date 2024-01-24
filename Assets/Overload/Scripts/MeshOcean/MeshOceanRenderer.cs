@@ -6,26 +6,56 @@ namespace overload
 {
     public class MeshOceanRenderer : MonoBehaviour
     {
-        #region public 
+        #region public members
 
         public MeshOceanData oceanData;
-
-        [Header("Render properties")]
-        public ShadowCastingMode shadowCasting = ShadowCastingMode.Off;
-        public bool receiveShadows = true;
-
-        [Header("Internal References")]
-        public ComputeShader m_resetInstancedIndirectDataComputeShader;
-        public ComputeShader m_meshOceanCullComputeShader;
-        public ComputeShader m_meshOceanComputeShader;
 
         #endregion
 
         #region monobehaviour
 
-        private void OnEnable()
+        void Start() => _init();
+
+        void Update() => _update();
+
+        void OnDestroy() => _freeResources();
+
+        #endregion
+
+        #region internal references
+
+        [Header("Audio")]
+        [SerializeField] AudioSpectrumGPU m_audioSpectrumGPU;
+
+        [Header("Internal References")]
+        [SerializeField] ComputeShader m_resetInstancedIndirectDataComputeShader;
+        [SerializeField] ComputeShader m_meshOceanCullComputeShader;
+        [SerializeField] ComputeShader m_meshOceanComputeShader;
+
+        #endregion
+
+        #region members
+
+        float m_seed;
+        float m_oceanWaveMaxHeight;
+        Vector2 m_oceanFluxOffset;
+
+        #region instanced indirect properties
+
+        uint[] m_indirectArgs;
+        uint[] m_instanceCount = { 0 };
+        ComputeBuffer m_indirectArgsBuffer;
+        ComputeBuffer m_modelMatricesBuffer;
+        MaterialPropertyBlock m_MPB;
+        Bounds m_bounds;
+
+        #endregion
+
+        #endregion
+
+        void _init()
         {
-            // init variables
+            // init member variables
             m_seed = 0;
             m_oceanWaveMaxHeight = oceanData.maxHeightMax;
             m_oceanFluxOffset = Vector2.zero;
@@ -35,53 +65,10 @@ namespace overload
             _initBuffers();
         }
 
-        private void Update()
+        void _initBuffers()
         {
-            _updateParameters();
-
-            _resetIIDComputePass();
-            _cullComputePass();
-            _waveHeightComputePass();
-
-            _drawIID();
-        }
-
-        private void OnDisable()
-        {
-            if (m_modelMatricesBuffer != null)
-            {
-                m_modelMatricesBuffer.Release();
-                m_modelMatricesBuffer = null;
-            }
-
-            if (m_indirectArgsBuffer != null)
-            {
-                m_indirectArgsBuffer.Release();
-                m_indirectArgsBuffer = null;
-            }
-        }
-
-        #endregion
-
-        #region private
-
-        private float m_seed;
-        private float m_oceanWaveMaxHeight;
-        private Vector2 m_oceanFluxOffset;
-
-        private uint[] m_indirectArgs;
-        private uint[] m_instanceCount = { 0 };
-        private ComputeBuffer m_indirectArgsBuffer;
-        private ComputeBuffer m_modelMatricesBuffer;
-
-        private MaterialPropertyBlock m_MPB;
-        private Bounds m_bounds;
-
-        private void _initBuffers()
-        {
-            uint maxInstanceCount = oceanData.dimension * oceanData.dimension;
-
             // init args buffer
+            uint maxInstanceCount = oceanData.dimension * oceanData.dimension;
             m_indirectArgs = new uint[5] { oceanData.mesh.GetIndexCount(0), maxInstanceCount, oceanData.mesh.GetIndexStart(0), oceanData.mesh.GetBaseVertex(0), 0 };
             m_indirectArgsBuffer = new ComputeBuffer(m_indirectArgs.Length, sizeof(uint), ComputeBufferType.IndirectArguments);
             m_indirectArgsBuffer.SetData(m_indirectArgs);
@@ -130,10 +117,22 @@ namespace overload
                 // set mesh ocean compute pass buffers
                 m_meshOceanComputeShader.SetBuffer(0, ShaderID._indirectArgs, m_indirectArgsBuffer);
                 m_meshOceanComputeShader.SetBuffer(0, ShaderID._oceanModelMatrices, m_modelMatricesBuffer);
+                m_meshOceanComputeShader.SetBuffer(0, ShaderID._audioSpectrum, m_audioSpectrumGPU.audioSpectrumBuffer); // TODO: add audio spectrum null check
             }
         }
 
-        private void _updateParameters()
+        void _update()
+        {
+            _updateParameters();
+
+            // passes
+            _resetIIDComputePass();
+            _cullComputePass();
+            _waveHeightComputePass();
+            _drawIID();
+        }
+
+        void _updateParameters()
         {
             float a = Mathf.PerlinNoise1D(Time.time * 0.01f);
             oceanData.maxHeightMin = Mathf.Min(oceanData.maxHeightMin, oceanData.maxHeightMax);
@@ -144,11 +143,11 @@ namespace overload
             m_oceanFluxOffset += oceanData.flux * Time.deltaTime;
         }
 
-        private void _resetIIDComputePass() => m_resetInstancedIndirectDataComputeShader.Dispatch(0, 1, 1, 1);
+        void _resetIIDComputePass() => m_resetInstancedIndirectDataComputeShader.Dispatch(0, 1, 1, 1);
 
-        private void _cullComputePass()
+        void _cullComputePass()
         {
-            // TODO: load uniforms shared across multiple shaders to a single buffer
+            // update uniforms (TODO: load uniforms shared across multiple shaders to a single buffer)
             m_meshOceanCullComputeShader.SetVector(ShaderID._oceanCenter, transform.position);
             m_meshOceanCullComputeShader.SetInt(ShaderID._oceanDimension, (int)oceanData.dimension);
             m_meshOceanCullComputeShader.SetFloat(ShaderID._oceanUnitSize, oceanData.unitSize);
@@ -157,13 +156,14 @@ namespace overload
 
             m_meshOceanCullComputeShader.SetMatrix(ShaderID._cameraVP, Camera.main.projectionMatrix * Camera.main.worldToCameraMatrix);
 
+            // dispatch
             int threadGroups = (int)oceanData.dimension / 32;
             m_meshOceanCullComputeShader.Dispatch(0, threadGroups, threadGroups, 1);
         }
 
-        private void _waveHeightComputePass()
+        void _waveHeightComputePass()
         {
-            // TODO: load uniforms shared across multiple shaders to a single buffer
+            // update uniforms (TODO: load uniforms shared across multiple shaders to a single buffer)
             m_meshOceanComputeShader.SetVector(ShaderID._oceanCenter, transform.position);
             m_meshOceanComputeShader.SetInt(ShaderID._oceanDimension, (int)oceanData.dimension);
             m_meshOceanComputeShader.SetFloat(ShaderID._oceanUnitSize, oceanData.unitSize);
@@ -173,18 +173,31 @@ namespace overload
 
             m_meshOceanComputeShader.SetFloat(ShaderID._seed, m_seed);
 
-            // TODO: dispatch indirect
+            // dispatch (TODO: dispatch indirect)
             m_indirectArgsBuffer.GetData(m_instanceCount, 0, 1, 1);
             int threadGroups = (int)MathF.Ceiling((float)m_instanceCount[0] / (float)1024);
             m_meshOceanComputeShader.Dispatch(0, threadGroups, 1, 1);
         }
 
-        private void _drawIID()
+        void _drawIID()
         {
             m_bounds = new Bounds(Vector3.zero, new Vector3(oceanData.unitSize * oceanData.dimension, m_oceanWaveMaxHeight, oceanData.unitSize * oceanData.dimension)); // TODO: calculate tighter bounds
-            Graphics.DrawMeshInstancedIndirect(oceanData.mesh, 0, oceanData.material, m_bounds, m_indirectArgsBuffer, 0, m_MPB, shadowCasting, receiveShadows);
+            Graphics.DrawMeshInstancedIndirect(oceanData.mesh, 0, oceanData.material, m_bounds, m_indirectArgsBuffer, 0, m_MPB, ShadowCastingMode.Off, false);
         }
 
-        #endregion
+        void _freeResources()
+        {
+            if (m_modelMatricesBuffer != null)
+            {
+                m_modelMatricesBuffer.Release();
+                m_modelMatricesBuffer = null;
+            }
+
+            if (m_indirectArgsBuffer != null)
+            {
+                m_indirectArgsBuffer.Release();
+                m_indirectArgsBuffer = null;
+            }
+        }
     }
 }
