@@ -143,16 +143,14 @@ namespace overload
             m_oceanFluxOffset += oceanData.flux * Time.deltaTime;
         }
 
-        void _resetIIDComputePass() => m_resetInstancedIndirectDataComputeShader.Dispatch(0, 1, 1, 1);
+        void _resetIIDComputePass()
+        {
+            m_resetInstancedIndirectDataComputeShader.Dispatch(0, 1, 1, 1);
+        }
 
         void _cullComputePass()
         {
-            // update uniforms (TODO: load uniforms shared across multiple shaders to a single buffer)
-            m_meshOceanCullComputeShader.SetVector(ShaderID._oceanCenter, transform.position);
-            m_meshOceanCullComputeShader.SetInt(ShaderID._oceanDimension, (int)oceanData.dimension);
-            m_meshOceanCullComputeShader.SetFloat(ShaderID._oceanUnitSize, oceanData.unitSize);
-            m_meshOceanCullComputeShader.SetFloat(ShaderID._oceanMaxHeight, m_oceanWaveMaxHeight);
-            m_meshOceanCullComputeShader.SetVector(ShaderID._oceanFluxOffset, m_oceanFluxOffset);
+            _updateOceanDataUniform(m_meshOceanCullComputeShader);
 
             m_meshOceanCullComputeShader.SetMatrix(ShaderID._cameraVP, Camera.main.projectionMatrix * Camera.main.worldToCameraMatrix);
 
@@ -163,13 +161,7 @@ namespace overload
 
         void _waveHeightComputePass()
         {
-            // update uniforms (TODO: load uniforms shared across multiple shaders to a single buffer)
-            m_meshOceanComputeShader.SetVector(ShaderID._oceanCenter, transform.position);
-            m_meshOceanComputeShader.SetInt(ShaderID._oceanDimension, (int)oceanData.dimension);
-            m_meshOceanComputeShader.SetFloat(ShaderID._oceanUnitSize, oceanData.unitSize);
-            m_meshOceanComputeShader.SetFloat(ShaderID._oceanMaxHeight, m_oceanWaveMaxHeight);
-            m_meshOceanComputeShader.SetFloat(ShaderID._oceanWaveFrequency, oceanData.waveFrequency);
-            m_meshOceanComputeShader.SetVector(ShaderID._oceanFluxOffset, m_oceanFluxOffset);
+            _updateOceanDataUniform(m_meshOceanComputeShader);
 
             m_meshOceanComputeShader.SetFloat(ShaderID._seed, m_seed);
 
@@ -177,6 +169,17 @@ namespace overload
             m_indirectArgsBuffer.GetData(m_instanceCount, 0, 1, 1);
             int threadGroups = (int)MathF.Ceiling((float)m_instanceCount[0] / (float)1024);
             m_meshOceanComputeShader.Dispatch(0, threadGroups, 1, 1);
+        }
+
+        void _updateOceanDataUniform(ComputeShader cs)
+        {
+            // update uniforms (TODO: load uniforms shared across multiple shaders to a single buffer)
+            cs.SetVector(ShaderID._oceanCenter, transform.position);
+            cs.SetInt(ShaderID._oceanDimension, (int)oceanData.dimension);
+            cs.SetFloat(ShaderID._oceanUnitSize, oceanData.unitSize);
+            cs.SetFloat(ShaderID._oceanMaxHeight, m_oceanWaveMaxHeight);
+            cs.SetFloat(ShaderID._oceanWaveFrequency, oceanData.waveFrequency);
+            cs.SetVector(ShaderID._oceanFluxOffset, m_oceanFluxOffset);
         }
 
         void _drawIID()
