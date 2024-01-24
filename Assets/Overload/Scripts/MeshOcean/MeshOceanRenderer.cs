@@ -37,7 +37,6 @@ namespace overload
         #region members
 
         float m_seed;
-        float m_oceanWaveMaxHeight;
         Vector2 m_oceanFluxOffset;
 
         #region instanced indirect properties
@@ -57,10 +56,10 @@ namespace overload
         {
             // init member variables
             m_seed = 0;
-            m_oceanWaveMaxHeight = oceanData.maxHeightMax;
             m_oceanFluxOffset = Vector2.zero;
 
             m_MPB = new MaterialPropertyBlock();
+            m_bounds = new Bounds();
 
             _initBuffers();
         }
@@ -134,10 +133,6 @@ namespace overload
 
         void _updateParameters()
         {
-            float a = Mathf.PerlinNoise1D(Time.time * 0.01f);
-            oceanData.maxHeightMin = Mathf.Min(oceanData.maxHeightMin, oceanData.maxHeightMax);
-            m_oceanWaveMaxHeight = Mathf.Lerp(oceanData.maxHeightMin, oceanData.maxHeightMax, a);
-
             m_seed += oceanData.speed * Time.deltaTime;
 
             m_oceanFluxOffset += oceanData.flux * Time.deltaTime;
@@ -177,15 +172,25 @@ namespace overload
             cs.SetVector(ShaderID._oceanCenter, transform.position);
             cs.SetInt(ShaderID._oceanDimension, (int)oceanData.dimension);
             cs.SetFloat(ShaderID._oceanUnitSize, oceanData.unitSize);
-            cs.SetFloat(ShaderID._oceanMaxHeight, m_oceanWaveMaxHeight);
+            cs.SetFloat(ShaderID._oceanMaxHeight, oceanData.maxHeight);
             cs.SetFloat(ShaderID._oceanWaveFrequency, oceanData.waveFrequency);
             cs.SetVector(ShaderID._oceanFluxOffset, m_oceanFluxOffset);
         }
 
         void _drawIID()
         {
-            m_bounds = new Bounds(Vector3.zero, new Vector3(oceanData.unitSize * oceanData.dimension, m_oceanWaveMaxHeight, oceanData.unitSize * oceanData.dimension)); // TODO: calculate tighter bounds
+            _updateOceanBounds();
             Graphics.DrawMeshInstancedIndirect(oceanData.mesh, 0, oceanData.material, m_bounds, m_indirectArgsBuffer, 0, m_MPB, ShadowCastingMode.Off, false);
+        }
+
+        void _updateOceanBounds()
+        {
+            m_bounds = new Bounds(transform.position,
+                                 new Vector3(
+                                    oceanData.unitSize * oceanData.dimension,
+                                    oceanData.maxHeight,
+                                    oceanData.unitSize * oceanData.dimension)
+                                ); // TODO: calculate tighter bounds
         }
 
         void _freeResources()

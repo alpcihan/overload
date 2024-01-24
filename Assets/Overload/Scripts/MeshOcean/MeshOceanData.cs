@@ -13,10 +13,7 @@ namespace overload
         public float unitSize;
 
         [Range(0.1f, 20)]
-        public float maxHeightMax;
-
-        [Range(0.1f, 20)]
-        public float maxHeightMin;
+        public float maxHeight;
 
         [Range(0f, 500)]
         public float waveFrequency;
