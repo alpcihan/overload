@@ -17,12 +17,13 @@ struct OceanInstanceData {
 //--------------------------------------------------------------------------------------
 // Ocean Data
 //--------------------------------------------------------------------------------------
-#define OCEAN_DATA  float3 _oceanCenter;      \
-                    uint _oceanDimension;     \
-                    float _oceanUnitSize;     \
-                    float _oceanMaxHeight;    \
-                    float _oceanWaveFrequency;\
-                    float2 _oceanFluxOffset;  \
+#define OCEAN_DATA  float3 _oceanCenter;        \
+                    uint _oceanDimension;       \
+                    float _oceanUnitSize;       \
+                    float _oceanMaxHeight;      \
+                    float _oceanWaveSpeed;      \
+                    float _oceanWaveFrequency;  \
+                    float2 _oceanFluxOffset;    \
 
 #define OCEAN_MODEL_MATRICES_BUFFER RWStructuredBuffer<OceanInstanceData> _oceanModelMatrices;
 

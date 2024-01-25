@@ -36,7 +36,7 @@ namespace overload
 
         #region members
 
-        float m_seed;
+        float m_time;
         Vector2 m_oceanFluxOffset;
 
         #region instanced indirect properties
@@ -55,7 +55,7 @@ namespace overload
         void _init()
         {
             // init member variables
-            m_seed = 0;
+            m_time = 0;
             m_oceanFluxOffset = Vector2.zero;
 
             m_MPB = new MaterialPropertyBlock();
@@ -133,7 +133,7 @@ namespace overload
 
         void _updateParameters()
         {
-            m_seed += oceanData.speed * Time.deltaTime;
+            m_time += Time.deltaTime;
 
             m_oceanFluxOffset += oceanData.flux * Time.deltaTime;
         }
@@ -158,7 +158,7 @@ namespace overload
         {
             _updateOceanDataUniform(m_meshOceanComputeShader);
 
-            m_meshOceanComputeShader.SetFloat(ShaderID._seed, m_seed);
+            m_meshOceanComputeShader.SetFloat(ShaderID._time, m_time);
 
             // dispatch (TODO: dispatch indirect)
             m_indirectArgsBuffer.GetData(m_instanceCount, 0, 1, 1);
@@ -173,6 +173,7 @@ namespace overload
             cs.SetInt(ShaderID._oceanDimension, (int)oceanData.dimension);
             cs.SetFloat(ShaderID._oceanUnitSize, oceanData.unitSize);
             cs.SetFloat(ShaderID._oceanMaxHeight, oceanData.maxHeight);
+            cs.SetFloat(ShaderID._oceanWaveSpeed, oceanData.speed);
             cs.SetFloat(ShaderID._oceanWaveFrequency, oceanData.waveFrequency);
             cs.SetVector(ShaderID._oceanFluxOffset, m_oceanFluxOffset);
         }

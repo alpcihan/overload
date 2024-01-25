@@ -14,7 +14,7 @@
 //--------------------------------------------------------------------------------------
 cbuffer CB {
     OCEAN_DATA
-    float _seed;
+    float _time;
 };
 
 //--------------------------------------------------------------------------------------
@@ -30,9 +30,10 @@ OCEAN_MODEL_MATRICES_BUFFER
 float oceanCalculateHeightLocal(uint2 unitPos) {
     // noise
     const float2 unitOffsetLocal = (_oceanWaveFrequency * _oceanUnitSize * unitPos) / _oceanDimension;
+    const float deltaTravel = _oceanWaveSpeed * _time;
     float h = noise(float3(
                         unitOffsetLocal,
-                        _seed
+                        deltaTravel
                     ));
     h *= _oceanMaxHeight;
 
