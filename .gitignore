@@ -75,7 +75,7 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Dev
-Dev/
-Dev.meta
+# Dev/
+# Dev.meta
 Samples/
 Samples.meta
