@@ -77,7 +77,7 @@ void CSMain (uint2 id : SV_DispatchThreadID) {
     uint2 unitPos = oceanCalculateUnitPosition(id, _oceanDimension, _oceanUnitSize, _oceanFluxOffset);
     const float2 worldPos2D = oceanCalculatePos2DWorld(unitPos, _oceanDimension, _oceanUnitSize, _oceanFluxOffset, _oceanCenter);
 
-    if(frustumCull(worldPos2D)) return;
+    // if(frustumCull(worldPos2D)) return;
 
     // instance update
     uint instanceIndex;

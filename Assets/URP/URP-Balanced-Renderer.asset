@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bf49384d4ccf47f2936797c828b446c, type: 3}
   m_Name: FullScreenRendererFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   m_material: {fileID: 2100000, guid: 5dd4b328badfe456e88c5d16046d7492, type: 2}
 --- !u!114 &-1110669922247766221
 MonoBehaviour:

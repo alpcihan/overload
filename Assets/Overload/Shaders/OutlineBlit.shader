@@ -25,8 +25,8 @@ Shader "OutlineBlit"
             #pragma vertex Vert
             #pragma fragment frag
 
-            TEXTURE2D_X(_CameraColorTexture);
-            SAMPLER(sampler_CameraColorTexture);
+            TEXTURE2D_X(_CameraOpaqueTexture);
+            SAMPLER(sampler_CameraOpaqueTexture);
 
             TEXTURE2D_X(_CameraDepthTexture);
             SAMPLER(sampler_CameraDepthTexture);
@@ -82,10 +82,10 @@ Shader "OutlineBlit"
                 return krnl > normalThreshold;
             }
 
-            float4 calculateFragColor(float3 color, float2 texCoord) {
+            float4 calculateFragColor(/*float3 color,*/ float2 texCoord) {
                 // check outline calculate flag
-                bool isCalcualteOutline = isOutlineCalculateStencil(color);
-                if(!isCalcualteOutline) return float4(color,1);
+                // bool isCalcualteOutline = isOutlineCalculateStencil(color);
+                // if(!isCalcualteOutline) return float4(color,1);
 
                 bool isOutlineDepth     = checkOutlineByDepth(texCoord, _depthThreshold);
                 bool isOutlineNormal    = checkOutlineByNormal(texCoord, _normalThreshold);
@@ -96,9 +96,9 @@ Shader "OutlineBlit"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                float3 color = SAMPLE_TEXTURE2D_X(_CameraColorTexture, sampler_CameraColorTexture, input.texcoord);
+                // float3 color = SAMPLE_TEXTURE2D_X(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, input.texcoord);
 
-                return calculateFragColor(color, input.texcoord);
+                return calculateFragColor(/*color,*/ input.texcoord);
             }
             ENDHLSL
         }
