@@ -1,0 +1,82 @@
+#pragma kernel CSMain
+
+//--------------------------------------------------------------------------------------
+// Includes
+//--------------------------------------------------------------------------------------
+#include "Assets/Overload/Shaders/Utils/Math.hlsl"
+
+//--------------------------------------------------------------------------------------
+// Buffers
+//--------------------------------------------------------------------------------------
+RWStructuredBuffer<float3> _positions;
+// RWStructuredBuffer<float3> _scales;
+
+uint _oceanDimension;   
+float3 _oceanCenter;
+float _oceanUnitSize;  
+float _oceanMaxHeight; 
+float _oceanWaveSpeed;
+float _oceanWaveFrequency;
+float2 _oceanFluxOffset;
+float _time;
+
+//--------------------------------------------------------------------------------------
+// Program
+//--------------------------------------------------------------------------------------
+float2 oceanCalculateHeight(uint2 unitPos) {
+    // noise
+    const float2 unitOffsetLocal = (_oceanWaveFrequency * _oceanUnitSize * unitPos) / _oceanDimension;
+    const float deltaTravel = _oceanWaveSpeed * _time;
+    float h = noise(float3(
+        unitOffsetLocal,
+        deltaTravel
+        ));
+    h *= _oceanMaxHeight;
+
+    /*
+    // audio
+    const uint unitPos1D = convertIndex2Dto1D(unitPos.yx, _oceanDimension);
+    const uint audioSampleIdx = unitPos1D % 1024;
+
+    float spectrumSample = _audioSpectrum[audioSampleIdx];
+
+    h += noise(float3(
+        unitOffsetLocal,
+        spectrumSample * 10
+        )) * spectrumSample * (audioSampleIdx + 1) * 2.5;
+    */
+
+    return h;
+}
+
+float2 oceanCalculatePos2D(uint2 unitPos) {
+    const float oceanSize = _oceanDimension * _oceanUnitSize;
+    const float halfOceanSize = oceanSize * 0.5;
+    const float halfUnitSize = _oceanUnitSize * 0.5;
+
+    // ocean bound                      [0, OceanSize - 1]
+    float2 xz = unitPos * _oceanUnitSize;
+
+    // add flux offset                  [0 + fluxOffset, OceanSize - 1 + fluxOffset]
+    xz += _oceanFluxOffset.xy;
+
+    // mod by ocean size                [0, OceanSize - 1]
+    xz %= oceanSize;
+
+    // calculate center of the mesh     [0 + halfUnitSize, OceanSize - 1 + halfUnitSize] 
+    xz += halfUnitSize;
+
+    // center the ocean at local space
+    xz -= halfOceanSize;
+
+    return xz;
+}
+
+[numthreads(32,32,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float2 pos2D = oceanCalculatePos2D(id.xy);
+    float height = oceanCalculateHeight(id.xy);
+
+    _positions[id.x + id.y * _oceanDimension] = float3(pos2D.x, height, pos2D.y);
+}

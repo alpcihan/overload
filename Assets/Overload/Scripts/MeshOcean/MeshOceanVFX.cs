@@ -1,9 +1,11 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.VFX;
 
 namespace overload
 {
+    [RequireComponent(typeof(VisualEffect))]
     public class MeshOceanVFX : MonoBehaviour
     {
         #region public members
@@ -25,24 +27,25 @@ namespace overload
         #region internal references
 
         [Header("Audio")]
-        [SerializeField] AudioSpectrumGPU m_audioSpectrumGPU;
+        [SerializeField] 
+        private AudioSpectrumGPU m_audioSpectrumGPU;
 
         [Header("Internal References")]
-        [SerializeField] ComputeShader m_oceanVFXCS;
+        [SerializeField] 
+        private ComputeShader m_oceanVFXCS;
         
         #endregion
 
-        #region members
+        #region private members
 
-        float m_time;
-        Vector2 m_oceanFluxOffset;
-        uint m_instanceCount;
+        private float m_time;
+        private Vector2 m_oceanFluxOffset;
+        private uint m_instanceCount;
 
-        #region instanced indirect properties
+        private GraphicsBuffer m_positionsBuffer;
+        private GraphicsBuffer m_scalesBuffer;
 
-        ComputeBuffer m_positionsBuffer;
-
-        #endregion
+        private VisualEffect m_vfx;
 
         #endregion
 
@@ -52,23 +55,35 @@ namespace overload
             m_time = 0;
             m_oceanFluxOffset = Vector2.zero;
             m_instanceCount = oceanData.dimension * oceanData.dimension;
+            
+            m_vfx = GetComponent<VisualEffect>();
 
-            _initBuffers();
-        }
+            // init buffers
+            m_positionsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, (int)m_instanceCount, sizeof(float) * 3);
+            m_scalesBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, (int)m_instanceCount, sizeof(float) * 3);
 
-        void _initBuffers()
-        {
+            // set buffers
             m_oceanVFXCS.SetBuffer(0, "_positions", m_positionsBuffer);
+            m_oceanVFXCS.SetBuffer(0, "_scales", m_scalesBuffer);
+
+            // set vfx params
+            m_vfx.SetGraphicsBuffer("positions", m_positionsBuffer);
+            // m_vfx.SetGraphicsBuffer("positions", m_positionsBuffer);
         }
 
+        
         void _update()
-        {
+        {   
+            // update data
             _updateParameters();
-            _updateOceanDataUniform(m_oceanVFXCS);
+            _updateUniformBuffer(m_oceanVFXCS);
 
-            m_oceanVFXCS.SetFloat(ShaderID._time, m_time);
-            int threadGroups = (int)MathF.Ceiling(m_instanceCount / (float)1024);
-            m_oceanVFXCS.Dispatch(0, threadGroups, 1, 1);
+            // set vfx data
+            m_vfx.SetUInt("dimension", oceanData.dimension);
+
+            // ocean compute
+            int threadGroups = Mathf.CeilToInt(oceanData.dimension / 32f);
+            m_oceanVFXCS.Dispatch(0, threadGroups, threadGroups, 1);
         }
 
         void _updateParameters()
@@ -77,9 +92,10 @@ namespace overload
             m_oceanFluxOffset += oceanData.flux * Time.deltaTime;
         }
 
-        void _updateOceanDataUniform(ComputeShader cs)
+        void _updateUniformBuffer(ComputeShader cs)
         {
             // update uniforms (TODO: load uniforms shared across multiple shaders to a single buffer)
+            cs.SetFloat(ShaderID._time, m_time);
             cs.SetVector(ShaderID._oceanCenter, transform.position);
             cs.SetInt(ShaderID._oceanDimension, (int)oceanData.dimension);
             cs.SetFloat(ShaderID._oceanUnitSize, oceanData.unitSize);

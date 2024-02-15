@@ -192,6 +192,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 253347593}
+  - component: {fileID: 253347594}
   - component: {fileID: 253347592}
   - component: {fileID: 253347591}
   m_Layer: 0
@@ -306,6 +307,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1010765754}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &253347594
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 253347590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b69f59c5d071e24890678fc44a86558, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  oceanData:
+    dimension: 512
+    unitSize: 1
+    maxHeight: 1
+    waveFrequency: 1
+    speed: 1
+    flux: {x: 1, y: 0}
+    mesh: {fileID: 0}
+    material: {fileID: 0}
+  m_audioSpectrumGPU: {fileID: 737256164}
+  m_oceanVFXCS: {fileID: 7200000, guid: 91c8ac67f8c190149950889c86765fd1, type: 3}
 --- !u!1 &322811072
 GameObject:
   m_ObjectHideFlags: 0
