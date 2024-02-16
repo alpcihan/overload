@@ -6,26 +6,32 @@ namespace overload
     [Serializable]
     public struct MeshOceanData
     {
+        public enum MeshOceanMode: int { Wave = 0, WaveAudio = 1, WaveCubes = 2, WaveCubesAudio = 3};
+        
         [Header("Properties")]
+        public MeshOceanMode mode;
+
         public uint dimension;
 
-        [Range(0.1f, 10.0f)]
+        [Min(0.001f)]
         public float unitSize;
 
-        [Range(0.1f, 20)]
+        [Min(0.1f)]
         public float maxHeight;
 
-        [Range(0f, 500)]
+        [Min(0f)]
         public float waveFrequency;
 
-        [Range(0, 10)]
+        [Min(0)]
         public float speed;
+
+        [Min(0)]
+        public float audioScale;
 
         public Vector2 flux;
 
         [Header("References")]
         public Mesh mesh;
-
         public Material material;
     };
 

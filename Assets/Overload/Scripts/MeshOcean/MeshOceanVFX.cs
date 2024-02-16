@@ -65,13 +65,13 @@ namespace overload
             // set buffers
             m_oceanVFXCS.SetBuffer(0, "_positions", m_positionsBuffer);
             m_oceanVFXCS.SetBuffer(0, "_scales", m_scalesBuffer);
+            m_oceanVFXCS.SetBuffer(0, ShaderID._audioSpectrum, m_audioSpectrumGPU.audioSpectrumBuffer); // TODO: add audio spectrum null check
 
             // set vfx params
             m_vfx.SetGraphicsBuffer("positions", m_positionsBuffer);
-            // m_vfx.SetGraphicsBuffer("positions", m_positionsBuffer);
+            m_vfx.SetGraphicsBuffer("scales", m_scalesBuffer);
         }
 
-        
         void _update()
         {   
             // update data
@@ -89,12 +89,17 @@ namespace overload
         void _updateParameters()
         {
             m_time += Time.deltaTime;
+
             m_oceanFluxOffset += oceanData.flux * Time.deltaTime;
         }
 
         void _updateUniformBuffer(ComputeShader cs)
         {
             // update uniforms (TODO: load uniforms shared across multiple shaders to a single buffer)
+            // TODO: add to ShaderID
+            cs.SetFloat("_audioScale", oceanData.audioScale);
+            cs.SetInt("_oceanMode", (int)oceanData.mode);
+
             cs.SetFloat(ShaderID._time, m_time);
             cs.SetVector(ShaderID._oceanCenter, transform.position);
             cs.SetInt(ShaderID._oceanDimension, (int)oceanData.dimension);

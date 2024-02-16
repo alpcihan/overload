@@ -1,5 +1,7 @@
 .config/
 .vscode/
+*.mp4
+*.mp4.meta
 
 # OS
 .DS_Store

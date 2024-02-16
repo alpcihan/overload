@@ -9,8 +9,10 @@
 // Buffers
 //--------------------------------------------------------------------------------------
 RWStructuredBuffer<float3> _positions;
-// RWStructuredBuffer<float3> _scales;
+RWStructuredBuffer<float3> _scales;
+StructuredBuffer<float> _audioSpectrum;
 
+int _oceanMode;
 uint _oceanDimension;   
 float3 _oceanCenter;
 float _oceanUnitSize;  
@@ -19,13 +21,14 @@ float _oceanWaveSpeed;
 float _oceanWaveFrequency;
 float2 _oceanFluxOffset;
 float _time;
+float _audioScale;
 
 //--------------------------------------------------------------------------------------
 // Program
 //--------------------------------------------------------------------------------------
-float2 oceanCalculateHeight(uint2 unitPos) {
+float2 oceanCalculateHeight(uint2 idx) {
     // noise
-    const float2 unitOffsetLocal = (_oceanWaveFrequency * _oceanUnitSize * unitPos) / _oceanDimension;
+    const float2 unitOffsetLocal = (_oceanWaveFrequency * _oceanUnitSize * idx) / _oceanDimension;
     const float deltaTravel = _oceanWaveSpeed * _time;
     float h = noise(float3(
         unitOffsetLocal,
@@ -33,29 +36,30 @@ float2 oceanCalculateHeight(uint2 unitPos) {
         ));
     h *= _oceanMaxHeight;
 
-    /*
     // audio
-    const uint unitPos1D = convertIndex2Dto1D(unitPos.yx, _oceanDimension);
-    const uint audioSampleIdx = unitPos1D % 1024;
+    if (_oceanMode == 1 || _oceanMode == 3) {
+        const uint2 idxFluxed = (idx + _oceanFluxOffset) % _oceanDimension;
+        const uint idx1D = idx.x + idx.y * _oceanDimension ;
+        const uint audioSampleIdx = idx1D % _oceanDimension;
 
-    float spectrumSample = _audioSpectrum[audioSampleIdx];
+        float spectrumSample = _audioSpectrum[audioSampleIdx];
 
-    h += noise(float3(
-        unitOffsetLocal,
-        spectrumSample * 10
-        )) * spectrumSample * (audioSampleIdx + 1) * 2.5;
-    */
+        h += noise(float3(
+            unitOffsetLocal,
+            spectrumSample * 10
+            )) * spectrumSample * (audioSampleIdx + 1) * _audioScale;
+    }
 
     return h;
 }
 
-float2 oceanCalculatePos2D(uint2 unitPos) {
+float2 oceanCalculatePos2D(uint2 idx) {
     const float oceanSize = _oceanDimension * _oceanUnitSize;
     const float halfOceanSize = oceanSize * 0.5;
     const float halfUnitSize = _oceanUnitSize * 0.5;
 
     // ocean bound                      [0, OceanSize - 1]
-    float2 xz = unitPos * _oceanUnitSize;
+    float2 xz = idx * _oceanUnitSize;
 
     // add flux offset                  [0 + fluxOffset, OceanSize - 1 + fluxOffset]
     xz += _oceanFluxOffset.xy;
@@ -72,11 +76,39 @@ float2 oceanCalculatePos2D(uint2 unitPos) {
     return xz;
 }
 
+float2 oceanCalculatePosAndScaleY(float height) {
+
+    float2 result = float2(0, 0);
+
+    // wave modes
+    if (_oceanMode == 0 || _oceanMode == 1) {
+        result = float2(height * 0.5, height);
+    }
+
+    // cube particle modes
+    else if (_oceanMode == 2 || _oceanMode == 3) {
+        result = float2(height, _oceanUnitSize);
+    }
+
+    return result;
+}
+
 [numthreads(32,32,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
+    // calculate pos 2D
     float2 pos2D = oceanCalculatePos2D(id.xy);
-    float height = oceanCalculateHeight(id.xy);
 
-    _positions[id.x + id.y * _oceanDimension] = float3(pos2D.x, height, pos2D.y);
+    // calculate height 
+    float height = 1;
+    if (!(pos2D.x < 145 && pos2D.x > 15.15 && pos2D.y > -130 && pos2D.y < -16.10)) {
+        height = max(0.1, oceanCalculateHeight(id.xy));;
+    }
+
+    // calculate pos y and scale y
+    float2 posAndScaleY = oceanCalculatePosAndScaleY(height);
+
+    const uint idx = id.x + id.y * _oceanDimension;
+    _positions[idx] = float3(pos2D.x, posAndScaleY.x, pos2D.y);
+    _scales[idx] = float3(_oceanUnitSize, posAndScaleY.y, _oceanUnitSize);
 }

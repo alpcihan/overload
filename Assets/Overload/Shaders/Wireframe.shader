@@ -7,6 +7,8 @@ Shader "Unlit/Wireframe-Shaded-Unlit"
 		_WireSmoothness("Wire Smoothness", RANGE(0, 20)) = 3
 		_WireColor("Wire Color", Color) = (0.0, 1.0, 0.0, 1.0)
 		_BaseColor("Base Color", Color) = (0.0, 0.0, 0.0, 1.0)
+		_FogCenter("Fog Center", Vector) = (0.0, 0.0, 0.0)
+		_FogDistance("Fog Distance", RANGE(0, 1000)) = 0
 	}
 
 		SubShader
@@ -32,6 +34,8 @@ Shader "Unlit/Wireframe-Shaded-Unlit"
 				uniform float _WireSmoothness;
 				uniform float4 _WireColor;
 				uniform float4 _BaseColor;
+				uniform float3 _FogCenter;
+				uniform float _FogDistance;
 
 				struct appdata
 				{
@@ -130,7 +134,12 @@ Shader "Unlit/Wireframe-Shaded-Unlit"
 					// Smooth our line out
 					float t = exp2(_WireSmoothness * -1.0 * minDistanceToEdge * minDistanceToEdge);
 					fixed4 finalColor = lerp(baseColor, _WireColor, t);
-					finalColor.a = t;
+					finalColor.a = 1;
+					
+					// fog
+					float fogDelta = distance(i.worldSpacePosition.xyz, _FogCenter) / _FogDistance;
+					fogDelta = clamp(fogDelta, 0, 1);
+					finalColor.xyz = lerp(finalColor.xyz, _BaseColor.xyz, fogDelta);
 
 					return finalColor;
 				}
