@@ -75,8 +75,8 @@ MonoBehaviour:
     max: Infinity
     enumValues: []
     descendantCount: 0
-  - name: primaryColor
-    path: primaryColor
+  - name: _primaryColor
+    path: _primaryColor
     tooltip: 
     sheetType: m_Vector4f
     realType: Color
@@ -89,8 +89,8 @@ MonoBehaviour:
     max: Infinity
     enumValues: []
     descendantCount: 0
-  - name: secondaryColor
-    path: secondaryColor
+  - name: _secondaryColor
+    path: _secondaryColor
     tooltip: 
     sheetType: m_Vector4f
     realType: Color
@@ -2645,7 +2645,7 @@ MonoBehaviour:
   m_InputSlots: []
   m_OutputSlots:
   - {fileID: 8926484042661614774}
-  m_ExposedName: primaryColor
+  m_ExposedName: _primaryColor
   m_Exposed: 1
   m_Order: 1
   m_Category: 
@@ -2861,7 +2861,7 @@ MonoBehaviour:
   m_InputSlots: []
   m_OutputSlots:
   - {fileID: 8926484042661614780}
-  m_ExposedName: secondaryColor
+  m_ExposedName: _secondaryColor
   m_Exposed: 1
   m_Order: 2
   m_Category: 

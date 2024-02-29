@@ -1,8 +1,8 @@
 Shader "Overload/FlatColorCubemap" {
 Properties {
     _Threshold("Threshold", Range(0,1)) = 0.5
-    _PrimaryColor ("Primary Color", Color) = (0, 0, 0, 1)
-    _SecondaryColor ("Secondary Color", Color) = (0, 0, 0, 1)
+    _primaryColor ("Primary Color", Color) = (0, 0, 0, 1)
+    _secondaryColor ("Secondary Color", Color) = (0, 0, 0, 1)
     _Tint ("Tint Color", Color) = (.5, .5, .5, .5)
     [Gamma] _Exposure ("Exposure", Range(0, 8)) = 1.0
     _Rotation ("Rotation", Range(0, 360)) = 0
@@ -28,8 +28,8 @@ SubShader {
         half _Exposure;
         float _Rotation;
         float _Threshold;
-        half4 _PrimaryColor;
-        half4 _SecondaryColor;
+        half4 _primaryColor;
+        half4 _secondaryColor;
 
         float3 RotateAroundYInDegrees (float3 vertex, float degrees)
         {
@@ -163,12 +163,12 @@ SubShader {
             // Threshold-based coloring
             //float2 ss = i.screenPos / i.screenPos.w;
             //float num = (c.x + c.y + c.z) * 0.33333;
-            //c = lerp( _SecondaryColor, _PrimaryColor, num);
+            //c = lerp( _secondaryColor, _primaryColor, num);
             //c = dither8x8(ss*float2(1280, 720), c);
         
             float num = (c.x + c.y + c.z) * 0.33333;
             float s = step((1.0-_Threshold), num);
-            c = s*_PrimaryColor + (1-s)*_SecondaryColor;
+            c = (1-s)*_primaryColor + (s)*_secondaryColor;
 
             return half4(c, 1);
         }

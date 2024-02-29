@@ -5,8 +5,8 @@ Shader "Unlit/Wireframe-Shaded-Unlit"
 		_MainTex("MainTex", 2D) = "white" {}
 		_WireThickness("Wire Thickness", RANGE(0, 800)) = 100
 		_WireSmoothness("Wire Smoothness", RANGE(0, 20)) = 3
-		_WireColor("Wire Color", Color) = (0.0, 1.0, 0.0, 1.0)
-		_BaseColor("Base Color", Color) = (0.0, 0.0, 0.0, 1.0)
+		_primaryColor("Primary Color", Color) = (0.0, 0.0, 0.0, 1.0)
+		_secondaryColor("Secondary Color", Color) = (0.0, 1.0, 0.0, 1.0)
 		_FogCenter("Fog Center", Vector) = (0.0, 0.0, 0.0)
 		_FogDistance("Fog Distance", RANGE(0, 1000)) = 0
 	}
@@ -32,8 +32,8 @@ Shader "Unlit/Wireframe-Shaded-Unlit"
 				uniform sampler2D _MainTex; uniform float4 _MainTex_ST;
 				uniform float _WireThickness;
 				uniform float _WireSmoothness;
-				uniform float4 _WireColor;
-				uniform float4 _BaseColor;
+				uniform float4 _secondaryColor;
+				uniform float4 _primaryColor;
 				uniform float3 _FogCenter;
 				uniform float _FogDistance;
 
@@ -123,7 +123,7 @@ Shader "Unlit/Wireframe-Shaded-Unlit"
 				{
 					float minDistanceToEdge = min(i.dist[0], min(i.dist[1], i.dist[2])) * i.dist[3];
 
-					float4 baseColor = _BaseColor * tex2D(_MainTex, i.uv0);
+					float4 baseColor = _primaryColor * tex2D(_MainTex, i.uv0);
 
 					// Early out if we know we are not on a line segment.
 					if (minDistanceToEdge > 0.9)
@@ -133,13 +133,13 @@ Shader "Unlit/Wireframe-Shaded-Unlit"
 
 					// Smooth our line out
 					float t = exp2(_WireSmoothness * -1.0 * minDistanceToEdge * minDistanceToEdge);
-					fixed4 finalColor = lerp(baseColor, _WireColor, t);
+					fixed4 finalColor = lerp(baseColor, _secondaryColor, t);
 					finalColor.a = 1;
 					
 					// fog
 					float fogDelta = distance(i.worldSpacePosition.xyz, _FogCenter) / _FogDistance;
 					fogDelta = clamp(fogDelta, 0, 1);
-					finalColor.xyz = lerp(finalColor.xyz, _BaseColor.xyz, fogDelta);
+					finalColor.xyz = lerp(finalColor.xyz, _primaryColor.xyz, fogDelta);
 
 					return finalColor;
 				}

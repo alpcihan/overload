@@ -144,4 +144,6 @@ Material:
     - _SecondaryColor: {r: 0.050980393, g: 0.047058824, b: 0.09803922, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _Tint: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
+    - _primaryColor: {r: 0.050980393, g: 0.047058824, b: 0.09803922, a: 1}
+    - _secondaryColor: {r: 0.72156864, g: 0.68235296, b: 0.6901961, a: 1}
   m_BuildTextureStacks: []

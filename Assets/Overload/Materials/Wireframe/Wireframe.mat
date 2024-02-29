@@ -132,6 +132,10 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FogCenter: {r: 80, g: 100, b: -70, a: 0}
+    - _PrimaryColor: {r: 0.050980397, g: 0.04705883, b: 0.098039225, a: 1}
+    - _SecondaryColor: {r: 0.72156864, g: 0.68235296, b: 0.6901961, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _WireColor: {r: 0.72156864, g: 0.68235296, b: 0.6901961, a: 1}
+    - _primaryColor: {r: 0.050980393, g: 0.047058824, b: 0.09803922, a: 1}
+    - _secondaryColor: {r: 0.72156864, g: 0.68235296, b: 0.6901961, a: 1}
   m_BuildTextureStacks: []
