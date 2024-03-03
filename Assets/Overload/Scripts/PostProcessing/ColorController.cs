@@ -34,7 +34,7 @@ public class ColorController : MonoBehaviour
         else
         {
             setColors(primary, secondary);
-            Vector4 col = new Vector4(secondary.r * 16, secondary.g * 16, secondary.b * 16, 16);
+            Vector4 col = new Vector4(secondary.r * 20, secondary.g * 20, secondary.b * 20, 20);
             
             foreach (var vfx in soundvfxs)
             {
