@@ -1,6 +1,6 @@
 # Overload Station
 
-<img src="https://github.com/alpcihan/overload/assets/37274614/05fb7939-e0e0-499c-b8ab-f01f741d89a9" alt="Image Description" width="640">
+<img src="https://github.com/alpcihan/overload/assets/37274614/ed507c64-864b-4e55-b54b-9f410907c150" alt="Image Description" width="1080">
 
 ## Concept
 Overload Station is a VR project that reimagines the concept of
@@ -32,11 +32,12 @@ explore Overload Station, letting their curiosity lead them
 through this immersive, auditory, and visual journey.
 
 ## Captures
-<img src="https://github.com/alpcihan/overload/assets/37274614/d7332086-d563-46e8-ac2f-1accaaa21e34" alt="Image Description" width="640">
 
-<img src="https://github.com/alpcihan/overload/assets/37274614/d0286ad6-e5c3-4fa2-9386-d2b248d73e2d" alt="Image Description" width="640">
+<img src="https://github.com/alpcihan/overload/assets/37274614/2b7619a8-ddcf-4e65-815c-81bb88e45efb" alt="Image Description" width="640">
 
-<img src="https://github.com/alpcihan/overload/assets/37274614/6446a746-a796-442d-8737-ea6d19dc72fa" alt="Image Description" width="640">
+<img src="https://github.com/alpcihan/overload/assets/37274614/f9e1d71d-cbd3-441f-b8a9-849d22fdd258" alt="Image Description" width="640">
+
+<img src="https://github.com/alpcihan/overload/assets/37274614/76e04b7b-e2e4-468c-a022-4219e80a1586" alt="Image Description" width="640">
 
 ## Team
 Alp Cihan, Anna Zieziula, Leo Petri, Umut Ercan
