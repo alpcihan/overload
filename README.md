@@ -13,7 +13,7 @@ realism. It also features curated 1980s videos that resonate with
 current issues of AI and information overload, deepening immersion
 through a concept of secondary immersion.
 
-### Attention is the new oil
+### "Attention is the new oil"
 Overload Station explores the commodification of attention in the
 digital age, examining how technologies captivate us. It questions
 our ability to resist addiction to virtual realities, amplified by VR and
